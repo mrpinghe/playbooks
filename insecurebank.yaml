@@ -1,0 +1,60 @@
+---
+# vars defined in /etc/ansible/group_vars/$group_name
+- hosts: aws
+  remote_user: "{{ init_user }}"
+  become: yes
+  tasks:
+    - name: Copy primary user authorized_keys to root
+      shell: "cp /home/{{ init_user }}/.ssh/authorized_keys /root/.ssh/"
+
+- hosts: ubuntu
+  remote_user: root
+  tasks: 
+    - name: Install git
+      apt: name=git state=latest
+    - name: Install pip
+      apt: name=python-pip state=latest
+    - name: Install sqlite3
+      apt: name=sqlite3 state=latest
+    - name: Install python webpy package
+      apt: name=python-webpy state=latest
+    - name: Install python flask package
+      pip: name=flask state=latest
+    - name: Install python sqlalchemy package
+      pip: name=sqlalchemy state=latest
+    - name: Install python simplejson package
+      pip: name=simplejson state=latest
+    - name: Create www-bank user to host AndroidInsecurebank
+      user: name=www-bank home=/home/www-bank
+    - name: Check out Insecurebank Repo
+      git: repo="https://github.com/dineshshetty/Android-InsecureBankv2.git" dest="/home/www-bank/insecurebank" accept_hostkey=yes force=yes
+    - name: Change ownership of insecurebank directory
+      file: path=/home/www-bank/insecurebank state=directory owner=www-bank group=www-bank recurse=yes
+    - name: Create a directory for log files
+      file: path=/home/www-bank/log state=directory owner=www-bank group=www-bank mode=0755
+    - name: Copy accounts population scripts
+      get_url: 
+        url: https://www.studioph.co/populate-accounts.sql 
+        dest: /home/www-bank//insecurebank/AndroLabServer/
+        owner: www-bank 
+        group: www-bank
+    - name: Copy user population scripts
+      get_url: 
+        url: https://www.studioph.co/populate-users.sql 
+        dest: /home/www-bank//insecurebank/AndroLabServer/
+        owner: www-bank 
+        group: www-bank
+    - name: populate tables
+      shell: "cat populate-users.sql | sqlite3 mydb.db && cat populate-accounts.sql | sqlite3 mydb.db"
+      args:
+        chdir: "/home/www-bank/insecurebank/AndroLabServer/"
+    - name: Add iptable rule to preroute port 80 to 8888
+      iptables: table=nat chain=PREROUTING to_ports=8888 destination_port=80 in_interface=eth0 jump=REDIRECT protocol=tcp
+    - name: Restart the server
+      shell: "ps aux | grep app.py | grep -v grep | awk '{print $2}' | xargs -n1 kill -SIGKILL; nohup python app.py >> /home/www-bank/log/aib.log 2>&1 &"
+      args:
+        chdir: "/home/www-bank/insecurebank/AndroLabServer/"
+      become: yes
+      become_user: www-bank
+        
+...
