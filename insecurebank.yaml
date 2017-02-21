@@ -48,6 +48,7 @@
       shell: "cat populate-users.sql | sqlite3 mydb.db && cat populate-accounts.sql | sqlite3 mydb.db"
       args:
         chdir: "/home/www-bank/insecurebank/AndroLabServer/"
+    # maybe consider change the following to use ProxyPass in Apache? need to install apache and co.
     - name: Add iptable rule to preroute port 80 to 8888
       iptables: table=nat chain=PREROUTING to_ports=8888 destination_port=80 in_interface=eth0 jump=REDIRECT protocol=tcp
     - name: Restart the server

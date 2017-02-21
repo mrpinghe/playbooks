@@ -1,0 +1,76 @@
+---
+
+- hosts: ubuntu
+  remote_user: "{{ init_user }}"
+  become: yes
+  tasks:
+    - name: Copy primary user authorized_keys to root
+      shell: "cp /home/{{ init_user }}/.ssh/authorized_keys /root/.ssh/"
+
+- hosts: ubuntu
+  remote_user: root
+#  environment:
+#      http_proxy: ""
+#      https_proxy: ""
+  tasks:
+    - name: Update apt repo cache
+      apt: update_cache=yes
+    - name: Install git
+      apt: name=git state=present
+    - name: Install python-dev
+      apt: name=python-dev state=present
+    - name: Install pip
+      apt: name=python-pip state=present
+    - name: Install apache
+      apt: name=apache2 state=present
+    - name: Install apache2-utils
+      apt: name=apache2-utils state=present
+    - name: Install apache2 mod proxy
+      apt: name=libapache2-mod-proxy-html state=present
+    - name: Install build-essential
+      apt: name=build-essential state=present
+    - name: Install mobsf dependency libxml2-dev
+      apt: name=libxml2-dev state=present
+    - name: Install mobsf dependency libxslt1-dev
+      apt: name=libxslt1-dev state=present
+    - name: Install mobsf dependency lib32z1-dev
+      apt: name=lib32z1-dev state=present
+    - name: Install mobsf dependency libjpeg-dev
+      apt: name=libjpeg-dev state=present
+    - name: Install java
+      apt: name=default-jre state=present
+    - name: Enable apache2 modules to enable proxy pass
+      apache2_module: name=proxy state=present
+    - name: Enable apache2 modules to enable proxy pass
+      apache2_module: name=proxy_http state=present
+    - name: Enable apache2 modules to enable proxy pass
+      apache2_module: name=proxy_ajp state=present
+    - name: Enable apache2 modules to enable proxy pass
+      apache2_module: name=rewrite state=present
+    - name: Enable apache2 modules to enable proxy pass
+      apache2_module: name=deflate state=present
+    - name: Enable apache2 modules to enable proxy pass
+      apache2_module: name=headers state=present
+    - name: Enable apache2 modules to enable proxy pass
+      apache2_module: name=proxy_balancer state=present
+    - name: Enable apache2 modules to enable proxy pass
+      apache2_module: name=proxy_connect state=present
+    - name: Enable apache2 modules to enable proxy pass
+      apache2_module: name=proxy_html state=present
+#    - name: disable ufw
+#      ufw: state=disabled
+    - name: get passlib for htpasswd
+      pip: name=passlib state=present
+    - name: create htpasswd file for basic auth
+      htpasswd: path=/etc/apache2/pass name=pentest create=yes password="{{ apache_pass }}" state=present
+    - name: clone the repo
+      git: repo=https://github.com/MobSF/Mobile-Security-Framework-MobSF.git dest="/home/{{ init_user }}/mobsf"
+      become: yes
+      become_user: "{{ init_user }}"
+    - name: install mobsf requirement file
+      pip: requirements="/home/{{ init_user }}/mobsf/requirements.txt"
+
+#   need to change apache config file (000-default) with pass file, add proxy pass, then start mobsf and apache
+#   adding ssl should be manual?
+
+...
