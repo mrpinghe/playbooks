@@ -32,7 +32,7 @@
       shell: mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.bk
       when: ssl_conf.stat.exists
     - name: Move vhost template file
-      template: src=/etc/ansible/templates/vhosts.conf dest=/etc/httpd/conf.d/vhosts.conf
+      template: src=./templates/vhosts.conf dest=/etc/httpd/conf.d/vhosts.conf
     - name: Restart httpd
       service: name=httpd state=restarted
     - name: Set up cron to renew cert
