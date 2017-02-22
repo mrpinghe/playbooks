@@ -1,0 +1,42 @@
+---
+
+- include: ./aws.yaml
+
+- hosts: rhel
+  vars:
+      domain_name: _DOMAIN_NAME_
+  remote_user: root
+  tasks:
+    - name: Install httpd (apache)
+      yum: name=httpd state=present
+    - name: Install mod_ssl for SSL support
+      yum: name=mod_ssl state=present
+    - name: Enable EPEL
+      yum: name=https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm state=present
+    - name: Install python-zope-interface for LetsEncrypt
+      yum: name=ftp://195.220.108.108/linux/centos/7.3.1611/os/x86_64/Packages/python-zope-interface-4.0.5-4.el7.x86_64.rpm state=present
+    - name: Install certbot by LetsEncrypt
+      yum: name=python-certbot-apache state=present
+    - name: Make custom vhost directory
+      file: path=/var/www/vhosts/http state=directory
+    - name: Default http index page
+      shell: echo hello > /var/www/vhosts/http/index.html
+    - name: Make custom vhost directory
+      file: path=/var/www/vhosts/https state=directory
+    - name: Default https index page
+      shell: echo secure > /var/www/vhosts/https/index.html
+    - name: Get ssl.conf stat
+      stat: path=/etc/httpd/conf.d/ssl.conf
+      register: ssl_conf
+    - name: Disable default ssl.conf
+      shell: mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.bk
+      when: ssl_conf.stat.exists
+    - name: Move vhost template file
+      template: src=/etc/ansible/templates/vhosts.conf dest=/etc/httpd/conf.d/vhosts.conf
+    - name: Restart httpd
+      service: name=httpd state=restarted
+    - name: Set up cron to renew cert
+      cron: job="certbot renew --quiet" state=present minute=0 hour=0 day=1 month=*/3
+
+...
+
