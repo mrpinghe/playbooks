@@ -3,8 +3,9 @@
 - include: ./aws.yaml
 
 - hosts: rhel
+  # adding this to remind user to pass command line arg --extra-vars "domain_name=www.example.com" for template
   vars:
-      domain_name: _DOMAIN_NAME_
+      domain_name: "{{ domain_name }}"
   remote_user: root
   tasks:
     - name: Install httpd (apache)
