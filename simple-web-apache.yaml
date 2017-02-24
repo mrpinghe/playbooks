@@ -15,7 +15,7 @@
     - name: Enable EPEL
       yum: name=https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm state=present
     - name: Install python-zope-interface for LetsEncrypt
-      yum: name=ftp://195.220.108.108/linux/centos/7.3.1611/os/x86_64/Packages/python-zope-interface-4.0.5-4.el7.x86_64.rpm state=present
+      yum: name=https://github.com/mrpinghe/files/blob/master/python-zope-interface-4.0.5-4.el7.x86_64.rpm?raw=true state=present
     - name: Install certbot by LetsEncrypt
       yum: name=python-certbot-apache state=present
     - name: Make custom vhost directory
